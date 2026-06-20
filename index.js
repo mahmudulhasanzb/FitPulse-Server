@@ -1,22 +1,15 @@
 const express = require('express');
 const app = express();
-const cors = require('cors')
-const dotenv = require('dotenv')
-dotenv.config()
+const cors = require('cors');
+const dotenv = require('dotenv');
+dotenv.config();
 const port = process.env.PORT || 8000;
-
-app.use(cors())
-app.use(express.json())
-
-
-
-
-
-
 const { MongoClient, ServerApiVersion } = require('mongodb');
 const uri = process.env.MONGO_DB_URI;
 
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
+app.use(cors());
+app.use(express.json());
+
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
@@ -30,13 +23,46 @@ async function run() {
     await client.connect();
 
     const db = client.db('fitpulse');
- 
-  
+    const userCollection = db.collection('user');
+    const classCollection = db.collection('classes');
+    const bookingCollection = db.collection('bookings');
+    const favoriteCollection = db.collection('favorites');
+    const forumPostCollection = db.collection('forumPosts');
+    const trainerApplicationCollection = db.collection('trainerApplications');
 
+    //trainer class add
+    app.post('/api/trainer', async (req, res) => {
+      const {
+        title,
+        email,
+        coverImage,
+        category,
+        difficulty,
+        duration,
+        price,
+        schedule,
+        startTime,
+        description,
+      } = req.body;
 
+      const addData = {
+        title,
+        email,
+        coverImage,
+        category,
+        difficulty,
+        duration,
+        price,
+        schedule,
+        startTime,
+        description,
+        createdAt: new Date(),
+      };
+      const result = await classCollection.insertOne(addData);
+      res.send(result);
+    });
 
-
-
+    
     console.log(
       'Pinged your deployment. You successfully connected to MongoDB!',
     );
@@ -46,11 +72,6 @@ async function run() {
   }
 }
 run().catch(console.dir);
-
-
-
-
-
 
 app.get('/', (req, res) => {
   res.send('Hello World!');

@@ -4,7 +4,7 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 dotenv.config();
 const port = process.env.PORT || 8000;
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = process.env.MONGO_DB_URI;
 
 app.use(cors());
@@ -29,6 +29,42 @@ async function run() {
     const favoriteCollection = db.collection('favorites');
     const forumPostCollection = db.collection('forumPosts');
     const trainerApplicationCollection = db.collection('trainerApplications');
+
+    app.get('/api/forum-post', async (req, res) => {
+      const result = await forumPostCollection.find({}).toArray();
+      res.send(result);
+    });
+
+    app.get('/api/my-forum-post/:email', async (req, res) => {
+      const email = req.params.email;
+      const result = await forumPostCollection.find({ authorEmail: email }).toArray();
+      res.send(result);
+    })
+
+    app.get('/api/forum-post/:id', async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const result = await forumPostCollection.findOne({
+        _id: new ObjectId(id),
+      });
+
+      res.send(result);
+    });
+
+    app.delete('/api/forum-post/:id', async (req, res) => {
+      const id = req.params.id;
+      const result = await forumPostCollection.deleteOne({
+        _id: new ObjectId(id),
+      });
+
+      res.send(result);
+    });
+
+
+
+
+
+
 
     //trainer class add
     app.post('/api/trainer', async (req, res) => {
@@ -62,7 +98,7 @@ async function run() {
       res.send(result);
     });
 
-    app.post('/api/forumpost', async (req, res) => {
+    app.post('/api/forum-post', async (req, res) => {
       const {
         title,
         authorEmail,

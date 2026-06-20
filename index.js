@@ -62,7 +62,33 @@ async function run() {
       res.send(result);
     });
 
-    
+    app.post('/api/forumpost', async (req, res) => {
+      const {
+        title,
+        authorEmail,
+        authorName,
+        role,
+        category,
+        image,
+        description,
+      } = req.body;
+      const addData = {
+        title,
+        description,
+        category,
+        image,
+        authorName,
+        authorEmail,
+        role,
+        createdAt: new Date(),
+        likes: [],
+        dislikes: [],
+        commentCount: [],
+      };
+      const result = await forumPostCollection.insertOne(addData);
+      res.send(result);
+    });
+
     console.log(
       'Pinged your deployment. You successfully connected to MongoDB!',
     );

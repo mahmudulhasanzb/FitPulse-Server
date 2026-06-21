@@ -30,17 +30,21 @@ async function run() {
     const forumPostCollection = db.collection('forumPosts');
     const trainerApplicationCollection = db.collection('trainerApplications');
 
-    app.get('/api/forum-post', async (req, res) => {
+    app.get(['/api/forum-post', '/api/forum-posts'], async (req, res) => {
       const result = await forumPostCollection.find({}).toArray();
       res.send(result);
     });
 
+    // get user's forum post by user email
     app.get('/api/my-forum-post/:email', async (req, res) => {
       const email = req.params.email;
-      const result = await forumPostCollection.find({ authorEmail: email }).toArray();
+      const result = await forumPostCollection
+        .find({ authorEmail: email })
+        .toArray();
       res.send(result);
-    })
+    });
 
+    // get forum post by id
     app.get('/api/forum-post/:id', async (req, res) => {
       const id = req.params.id;
       console.log(id);
@@ -51,6 +55,7 @@ async function run() {
       res.send(result);
     });
 
+    // delete forum post
     app.delete('/api/forum-post/:id', async (req, res) => {
       const id = req.params.id;
       const result = await forumPostCollection.deleteOne({
@@ -59,12 +64,6 @@ async function run() {
 
       res.send(result);
     });
-
-
-
-
-
-
 
     //trainer class add
     app.post('/api/trainer', async (req, res) => {
@@ -98,11 +97,13 @@ async function run() {
       res.send(result);
     });
 
+    // add forum post
     app.post('/api/forum-post', async (req, res) => {
       const {
         title,
         authorEmail,
         authorName,
+        authorImage,
         role,
         category,
         image,
@@ -115,6 +116,7 @@ async function run() {
         image,
         authorName,
         authorEmail,
+        authorImage,
         role,
         createdAt: new Date(),
         likes: [],

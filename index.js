@@ -41,6 +41,7 @@ app.post('/api/trainer', async (req, res) => {
   const {
     className,
     authorName,
+    authorEmail,
     authorImage,
     authorRole,
     coverImage,
@@ -59,6 +60,7 @@ app.post('/api/trainer', async (req, res) => {
   const addData = {
     className,
     authorName,
+    authorEmail,
     authorImage,
     authorRole,
     coverImage,
@@ -80,6 +82,49 @@ app.post('/api/trainer', async (req, res) => {
 // get all classes
 app.get('/api/classes', async (req, res) => {
   const result = await classCollection.find({}).toArray();
+  res.send(result);
+});
+
+// get class by id or email
+app.get('/api/classes/:identifier', async (req, res) => {
+  const identifier = req.params.identifier;
+  try {
+    if (ObjectId.isValid(identifier)) {
+      const result = await classCollection.findOne({
+        _id: new ObjectId(identifier),
+      });
+      res.send(result);
+    } else {
+      const result = await classCollection
+        .find({
+          $or: [{ email: identifier }, { authorEmail: identifier }],
+        })
+        .toArray();
+      res.send(result);
+    }
+  } catch (error) {
+    res.status(500).send({ error: true, message: error.message });
+  }
+});
+
+// delete class by id
+app.delete('/api/classes/:id', async (req, res) => {
+  const id = req.params.id;
+  const result = await classCollection.deleteOne({
+    _id: new ObjectId(id),
+  });
+  res.send(result);
+});
+
+// update class by id
+app.patch('/api/classes/:id', async (req, res) => {
+  const id = req.params.id;
+  const updatedClassData = req.body;
+
+  const result = await classCollection.updateOne(
+    { _id: new ObjectId(id) },
+    { $set: updatedClassData }
+  );
   res.send(result);
 });
 

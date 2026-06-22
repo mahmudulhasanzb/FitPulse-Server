@@ -36,6 +36,54 @@ const favoriteCollection = db.collection('favorites');
 const forumPostCollection = db.collection('forumPosts');
 const trainerApplicationCollection = db.collection('trainerApplications');
 
+// add class
+app.post('/api/trainer', async (req, res) => {
+  const {
+    className,
+    authorName,
+    authorImage,
+    authorRole,
+    coverImage,
+    category,
+    difficulty,
+    duration,
+    price,
+    schedule,
+    startTime,
+    description,
+    status,
+    totalEnrollment,
+    createdAt,
+  } = req.body;
+
+  const addData = {
+    className,
+    authorName,
+    authorImage,
+    authorRole,
+    coverImage,
+    category,
+    difficulty,
+    duration,
+    price,
+    schedule,
+    startTime,
+    description,
+    status,
+    totalEnrollment,
+    createdAt,
+  };
+  const result = await classCollection.insertOne(addData);
+  res.send(result);
+});
+
+// get all classes
+app.get('/api/classes', async (req, res) => {
+  const result = await classCollection.find({}).toArray();
+  res.send(result);
+});
+
+// get all forum posts
 app.get(['/api/forum-post', '/api/forum-posts'], async (req, res) => {
   const result = await forumPostCollection.find({}).toArray();
   res.send(result);
@@ -68,38 +116,6 @@ app.delete('/api/forum-post/:id', async (req, res) => {
     _id: new ObjectId(id),
   });
 
-  res.send(result);
-});
-
-//trainer class add
-app.post('/api/trainer', async (req, res) => {
-  const {
-    title,
-    email,
-    coverImage,
-    category,
-    difficulty,
-    duration,
-    price,
-    schedule,
-    startTime,
-    description,
-  } = req.body;
-
-  const addData = {
-    title,
-    email,
-    coverImage,
-    category,
-    difficulty,
-    duration,
-    price,
-    schedule,
-    startTime,
-    description,
-    createdAt: new Date(),
-  };
-  const result = await classCollection.insertOne(addData);
   res.send(result);
 });
 
@@ -142,4 +158,3 @@ app.listen(port, () => {
 });
 
 module.exports = app;
-

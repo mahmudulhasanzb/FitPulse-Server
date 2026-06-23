@@ -125,7 +125,7 @@ app.patch('/api/classes/:id', async (req, res) => {
 
   const result = await classCollection.updateOne(
     { _id: new ObjectId(id) },
-    { $set: updatedClassData }
+    { $set: updatedClassData },
   );
   res.send(result);
 });
@@ -133,6 +133,20 @@ app.patch('/api/classes/:id', async (req, res) => {
 // get all forum posts
 app.get(['/api/forum-post', '/api/forum-posts'], async (req, res) => {
   const result = await forumPostCollection.find({}).toArray();
+  res.send(result);
+});
+
+// get forum post by pagination
+app.get('/api/forum-posts-paginate', async (req, res) => {
+  const { page = 1, limit = 10 } = req.query;
+  const skip = (Number(page) - 1) * Number(limit);
+
+  const result = await forumPostCollection
+    .find({})
+    .skip(skip)
+    .limit(Number(limit))
+    .toArray();
+
   res.send(result);
 });
 
@@ -163,7 +177,7 @@ app.patch('/api/forum-post/:id', async (req, res) => {
 
   const result = await forumPostCollection.updateOne(
     { _id: new ObjectId(id) },
-    { $set: updatedForumPostData }
+    { $set: updatedForumPostData },
   );
   res.send(result);
 });

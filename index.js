@@ -54,6 +54,7 @@ app.post('/api/trainer', async (req, res) => {
     description,
     status,
     totalEnrollment,
+    capacity,
     createdAt,
   } = req.body;
 
@@ -73,6 +74,7 @@ app.post('/api/trainer', async (req, res) => {
     description,
     status,
     totalEnrollment,
+    capacity,
     createdAt,
   };
   const result = await classCollection.insertOne(addData);
@@ -151,6 +153,18 @@ app.get('/api/forum-post/:id', async (req, res) => {
     _id: new ObjectId(id),
   });
 
+  res.send(result);
+});
+
+// edit forum post by id
+app.patch('/api/forum-post/:id', async (req, res) => {
+  const id = req.params.id;
+  const updatedForumPostData = req.body;
+
+  const result = await forumPostCollection.updateOne(
+    { _id: new ObjectId(id) },
+    { $set: updatedForumPostData }
+  );
   res.send(result);
 });
 

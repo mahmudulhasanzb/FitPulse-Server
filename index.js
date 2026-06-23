@@ -82,9 +82,25 @@ app.post('/api/trainer', async (req, res) => {
 });
 
 // get all classes
+// app.get('/api/classes', async (req, res) => {
+//   const result = await classCollection.find({}).toArray();
+//   res.send(result);
+// });
+
+// get paginated classes
 app.get('/api/classes', async (req, res) => {
-  const result = await classCollection.find({}).toArray();
-  res.send(result);
+  const { page = 1, limit = 10 } = req.query;
+  const skip = (Number(page) - 1) * Number(limit);
+
+  const result = await classCollection
+    .find({})
+    .skip(skip)
+    .limit(Number(limit))
+    .toArray();
+  const totalData = await classCollection.countDocuments();
+  const totalPage = Math.ceil(totalData/Number(limit))
+
+  res.send({data: result, page: Number(page), totalPage});
 });
 
 // get class by id or email
@@ -131,13 +147,13 @@ app.patch('/api/classes/:id', async (req, res) => {
 });
 
 // get all forum posts
-app.get(['/api/forum-post', '/api/forum-posts'], async (req, res) => {
-  const result = await forumPostCollection.find({}).toArray();
-  res.send(result);
-});
+// app.get(['/api/forum-post', '/api/forum-posts'], async (req, res) => {
+//   const result = await forumPostCollection.find({}).toArray();
+//   res.send(result);
+// });
 
 // get forum post by pagination
-app.get('/api/forum-posts-paginate', async (req, res) => {
+app.get('/api/forum-posts', async (req, res) => {
   const { page = 1, limit = 10 } = req.query;
   const skip = (Number(page) - 1) * Number(limit);
 
@@ -147,7 +163,10 @@ app.get('/api/forum-posts-paginate', async (req, res) => {
     .limit(Number(limit))
     .toArray();
 
-  res.send(result);
+  const totalData = await forumPostCollection.countDocuments();
+  const totalPage = Math.ceil(totalData / Number(limit));
+
+  res.send({ data: result, page: Number(page), totalPage });
 });
 
 // get user's forum post by user email

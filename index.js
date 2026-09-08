@@ -82,8 +82,7 @@ const trainerApplicationCollection = db.collection('trainerApplications');
 const commentCollection = db.collection('comments');
 const transactionCollection = db.collection('transactions');
 
-// ─── CLASSES ───────────────────────────────────────────────────────────────
-
+// ─── CLASSES ───────────────────────────────────────────────────
 app.post('/api/trainer', verifyToken, verifyRole('trainer', 'admin'), verifyBlocked, async (req, res) => {
   const {
     className, authorName, authorEmail, authorImage, authorRole,
@@ -173,7 +172,6 @@ app.patch('/api/classes/:id', verifyToken, verifyRole('trainer', 'admin'), async
 });
 
 // ─── FORUM POSTS ──────────────────────────────────────────────────────────
-
 app.get('/api/forum-posts', async (req, res) => {
   const { page = 1, limit = 10 } = req.query;
   const skip = (Number(page) - 1) * Number(limit);
@@ -227,7 +225,6 @@ app.post('/api/forum-post', verifyToken, verifyRole('trainer', 'admin'), verifyB
 });
 
 // ─── COMMENTS ──────────────────────────────────────────────────────────────
-
 app.post('/api/forum-post/:id/comments', verifyToken, verifyBlocked, async (req, res) => {
   const postId = req.params.id;
   const { content } = req.body;
@@ -284,7 +281,6 @@ app.delete('/api/comments/:id', verifyToken, async (req, res) => {
 });
 
 // ─── LIKES / DISLIKES ──────────────────────────────────────────────────────
-
 app.post('/api/forum-post/:id/like', verifyToken, verifyBlocked, async (req, res) => {
   const postId = req.params.id;
   const userEmail = req.user.email;
@@ -336,7 +332,6 @@ app.post('/api/forum-post/:id/dislike', verifyToken, verifyBlocked, async (req, 
 });
 
 // ─── BOOKINGS ──────────────────────────────────────────────────────────────
-
 app.post('/api/bookings', verifyToken, verifyBlocked, async (req, res) => {
   if (req.user.role === 'admin') {
     return res.status(403).json({ msg: "Forbidden: Admins cannot book classes" });
@@ -381,7 +376,6 @@ app.get('/api/bookings/check/:classId/:email', async (req, res) => {
 });
 
 // ─── FAVORITES ─────────────────────────────────────────────────────────────
-
 app.post('/api/favorites', verifyToken, verifyBlocked, async (req, res) => {
   if (req.user.role === 'admin') {
     return res.status(403).json({ msg: "Forbidden: Admins cannot favorite classes" });
@@ -425,7 +419,6 @@ app.get('/api/favorites/check/:classId/:email', async (req, res) => {
 });
 
 // ─── TRAINER APPLICATIONS ──────────────────────────────────────────────────
-
 app.post('/api/trainer-application', verifyToken, verifyBlocked, async (req, res) => {
   const { experience, specialty } = req.body;
   const existing = await trainerApplicationCollection.findOne({
@@ -489,7 +482,6 @@ app.patch('/api/trainer-application/:id', verifyToken, verifyRole('admin'), asyn
 });
 
 // ─── ADMIN: USERS ──────────────────────────────────────────────────────────
-
 app.get('/api/users', async (req, res) => {
   const result = await userCollection.find({}).toArray();
   res.send(result);
@@ -506,7 +498,6 @@ app.patch('/api/users/:id', verifyToken, verifyRole('admin'), async (req, res) =
 });
 
 // ─── ADMIN: ALL CLASSES MANAGEMENT ─────────────────────────────────────────
-
 app.get('/api/admin/classes', async (req, res) => {
   const result = await classCollection.find({}).sort({ createdAt: -1 }).toArray();
   res.send(result);
@@ -523,7 +514,6 @@ app.patch('/api/admin/classes/:id', verifyToken, verifyRole('admin'), async (req
 });
 
 // ─── TRANSACTIONS ──────────────────────────────────────────────────────────
-
 app.get('/api/transactions', async (req, res) => {
   const result = await transactionCollection.find({}).sort({ createdAt: -1 }).toArray();
   res.send(result);
@@ -537,7 +527,6 @@ app.post('/api/transactions', async (req, res) => {
 });
 
 // ─── DASHBOARD STATS ───────────────────────────────────────────────────────
-
 app.get('/api/stats/admin', async (req, res) => {
   const totalUsers = await userCollection.countDocuments();
   const totalTrainers = await userCollection.countDocuments({ role: 'trainer' });
@@ -572,21 +561,18 @@ app.get('/api/stats/trainer/:email', async (req, res) => {
 });
 
 // ─── ALL FORUM POSTS (ADMIN) ───────────────────────────────────────────────
-
 app.get('/api/all-forum-posts', async (req, res) => {
   const result = await forumPostCollection.find({}).sort({ createdAt: -1 }).toArray();
   res.send(result);
 });
 
 // ─── ALL TRAINERS ──────────────────────────────────────────────────────────
-
 app.get('/api/trainers', async (req, res) => {
   const result = await userCollection.find({ role: 'trainer' }).toArray();
   res.send(result);
 });
 
 // ─── DEMOTE TRAINER ────────────────────────────────────────────────────────
-
 app.patch('/api/trainers/demote/:id', verifyToken, verifyRole('admin'), async (req, res) => {
   const id = req.params.id;
   const result = await userCollection.updateOne(
@@ -597,7 +583,6 @@ app.patch('/api/trainers/demote/:id', verifyToken, verifyRole('admin'), async (r
 });
 
 // ─── ROOT ──────────────────────────────────────────────────────────────────
-
 app.get('/', (req, res) => {
   res.send('Hello World!');
 });

@@ -173,17 +173,67 @@ app.patch('/api/classes/:id', verifyToken, verifyRole('trainer', 'admin'), async
 
 // ─── FORUM POSTS ──────────────────────────────────────────────────────────
 app.get('/api/forum-posts', async (req, res) => {
-  const { page = 1, limit = 10 } = req.query;
-  const skip = (Number(page) - 1) * Number(limit);
-  const result = await forumPostCollection
-    .find({})
-    .sort({ createdAt: +1 })
-    .skip(skip)
-    .limit(Number(limit))
-    .toArray();
-  const totalData = await forumPostCollection.countDocuments();
-  const totalPage = Math.ceil(totalData / Number(limit));
-  res.send({ data: result, page: Number(page), totalPage });
+  try {
+    const { page = 1, limit = 6, search = '', category = '', sort = 'latest' } = req.query;
+    const pageNum = Math.max(1, Number(page) || 1);
+    const limitNum = Math.max(1, Number(limit) || 6);
+    const skip = (pageNum - 1) * limitNum;
+
+    const filter = {};
+
+    if (search && search.trim()) {
+      const sanitized = search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      filter.$or = [
+        { title: { $regex: sanitized, $options: 'i' } },
+        { description: { $regex: sanitized, $options: 'i' } },
+        { authorName: { $regex: sanitized, $options: 'i' } },
+      ];
+    }
+
+    if (category && category !== 'ALL PROTOCOLS' && category !== 'ALL') {
+      const sanitizedCategory = category.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      filter.category = { $regex: `^${sanitizedCategory}$`, $options: 'i' };
+    }
+
+    let posts = [];
+    if (sort === 'popular') {
+      // Sort by like count (length of likes array), then latest
+      posts = await forumPostCollection
+        .aggregate([
+          { $match: filter },
+          {
+            $addFields: {
+              likeCount: { $size: { $ifNull: ['$likes', []] } },
+            },
+          },
+          { $sort: { likeCount: -1, createdAt: -1 } },
+          { $skip: skip },
+          { $limit: limitNum },
+        ])
+        .toArray();
+    } else {
+      const sortObj = sort === 'oldest' ? { createdAt: 1 } : { createdAt: -1 };
+      posts = await forumPostCollection
+        .find(filter)
+        .sort(sortObj)
+        .skip(skip)
+        .limit(limitNum)
+        .toArray();
+    }
+
+    const totalData = await forumPostCollection.countDocuments(filter);
+    const totalPage = Math.ceil(totalData / limitNum) || 1;
+
+    res.send({
+      data: posts,
+      page: pageNum,
+      totalPage,
+      totalData,
+    });
+  } catch (error) {
+    console.error('Error fetching forum posts:', error);
+    res.status(500).send({ error: true, message: error.message });
+  }
 });
 
 app.get('/api/my-forum-post/:email', async (req, res) => {
@@ -226,23 +276,32 @@ app.post('/api/forum-post', verifyToken, verifyRole('trainer', 'admin'), verifyB
 
 // ─── COMMENTS ──────────────────────────────────────────────────────────────
 app.post('/api/forum-post/:id/comments', verifyToken, verifyBlocked, async (req, res) => {
-  const postId = req.params.id;
-  const { content } = req.body;
-  if (!content) return res.status(400).json({ msg: "Content is required" });
-  const comment = {
-    postId: new ObjectId(postId),
-    userEmail: req.user.email,
-    userName: req.user.name,
-    userImage: req.user.picture || '',
-    content,
-    createdAt: new Date(),
-  };
-  const result = await commentCollection.insertOne(comment);
-  await forumPostCollection.updateOne(
-    { _id: new ObjectId(postId) },
-    { $inc: { commentCount: 1 } },
-  );
-  res.send(result);
+  try {
+    const postId = req.params.id;
+    const { content } = req.body;
+    if (!content || !content.trim()) return res.status(400).json({ msg: "Content is required" });
+
+    // Fetch user directly from userCollection using token email
+    const user = await userCollection.findOne({ email: req.user.email });
+
+    const comment = {
+      postId: new ObjectId(postId),
+      userEmail: req.user.email,
+      userName: user?.name || req.user.name,
+      userImage: user?.image || '',
+      content: content.trim(),
+      createdAt: new Date(),
+    };
+    const result = await commentCollection.insertOne(comment);
+    await forumPostCollection.updateOne(
+      { _id: new ObjectId(postId) },
+      { $inc: { commentCount: 1 } },
+    );
+    res.send(result);
+  } catch (error) {
+    console.error('Error adding comment:', error);
+    res.status(500).send({ error: true, message: error.message });
+  }
 });
 
 app.get('/api/forum-post/:id/comments', async (req, res) => {
